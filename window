@@ -1,0 +1,21 @@
+#!/usr/bin/env -S awk -f
+BEGIN {
+  # If window is unspecified, calculate differences
+  window = ARGC >= 2 ? ARGV[1] : 1
+
+  # Clear args so no additional files are read as inputs
+  delete ARGV
+}
+
+# Keep history via a ring buffer
+{
+  idx = NR % window
+  curr_val = $0
+  prev_val = history[idx]
+  history[idx] = curr_val
+}
+
+# Report diff once we have enough samples
+NR > window {
+  print curr_val, prev_val, (curr_val - prev_val) / window
+}

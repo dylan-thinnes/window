@@ -1,0 +1,34 @@
+#!/usr/bin/env -S awk -f
+BEGIN {
+  # If window is unspecified, calculate global average
+  max_window = 1
+  if (ARGC <= 1) {
+    windows[0] = 0
+  } else {
+    for (ii = 1; ii < ARGC; ii++) {
+      windows[ARGV[ii]] = 0
+      if (ARGV[ii] > max_window) max_window = ARGV[ii]
+    }
+  }
+
+  # Clear args so no additional files are read as inputs
+  delete ARGV
+}
+
+NR == 1 { first_val = $0 }
+{ curr_val = $0 }
+
+NR > max_window {
+  first = 1
+  for (window in windows) {
+    if (!first) printf ", "
+    first = 0
+
+    prev_val = window == 0 ? first_val : history[(NR - window) % max_window]
+    window_size = window == 0 ? NR - 1 : window
+    printf "%d: %.4f", window, (curr_val - prev_val) / window_size
+  }
+  print ""
+}
+
+{ history[NR % max_window] = curr_val }

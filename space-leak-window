@@ -1,0 +1,44 @@
+#!/usr/bin/env -S awk -f
+BEGIN {
+  rate = 1
+  window = 0
+  objective = 0
+
+  if (ARGC >= 2) rate = ARGV[1]
+  if (ARGC >= 3) window = ARGV[2]
+  if (ARGC >= 4) objective = ARGV[3]
+
+  # Clear args so no additional files are read as inputs
+  for (i = 0; i < ARGC; i++) {
+    ARGV[i] = ""
+  }
+}
+
+# Handle record
+NR == 1 { last = $0; next }
+{
+  # Calculate diff, adjust window total
+  hist[NR] = $0 - last
+  total += hist[NR]
+
+  if (window > 0) {
+    total -= hist[NR - window]
+  }
+
+  # Report running info (DISABLED)
+  #print NR, $0, last, hist[NR], hist[NR - window], total
+
+  # Set up for next record
+  last = $0
+}
+
+{
+  elapsed = window == 0 || window >= NR ? NR - 1 : window
+  elapsed = elapsed * rate
+
+  # Report window info
+  #print window, rate, elapsed, NR - 1, total
+
+  # Report average over window
+  printf "%.4f\n", total / elapsed
+}
